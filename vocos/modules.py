@@ -31,7 +31,9 @@ class ConvNeXtBlock(nn.Module):
             self.norm = AdaLayerNorm(adanorm_num_embeddings, dim, eps=1e-6)
         else:
             self.norm = nn.LayerNorm(dim, eps=1e-6)
-        self.pwconv1 = nn.Linear(dim, intermediate_dim)  # pointwise/1x1 convs, implemented with linear layers
+        self.pwconv1 = nn.Linear(
+            dim, intermediate_dim
+        )  # pointwise/1x1 convs, implemented with linear layers
         self.act = nn.GELU()
         self.pwconv2 = nn.Linear(intermediate_dim, dim)
         self.gamma = (
@@ -40,7 +42,9 @@ class ConvNeXtBlock(nn.Module):
             else None
         )
 
-    def forward(self, x: torch.Tensor, cond_embedding_id: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(
+        self, x: torch.Tensor, cond_embedding_id: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
         residual = x
         x = self.dwconv(x)
         x = x.transpose(1, 2)  # (B, C, T) -> (B, T, C)
@@ -149,9 +153,36 @@ class ResBlock1(nn.Module):
 
         self.convs2 = nn.ModuleList(
             [
-                weight_norm(nn.Conv1d(dim, dim, kernel_size, 1, dilation=1, padding=self.get_padding(kernel_size, 1))),
-                weight_norm(nn.Conv1d(dim, dim, kernel_size, 1, dilation=1, padding=self.get_padding(kernel_size, 1))),
-                weight_norm(nn.Conv1d(dim, dim, kernel_size, 1, dilation=1, padding=self.get_padding(kernel_size, 1))),
+                weight_norm(
+                    nn.Conv1d(
+                        dim,
+                        dim,
+                        kernel_size,
+                        1,
+                        dilation=1,
+                        padding=self.get_padding(kernel_size, 1),
+                    )
+                ),
+                weight_norm(
+                    nn.Conv1d(
+                        dim,
+                        dim,
+                        kernel_size,
+                        1,
+                        dilation=1,
+                        padding=self.get_padding(kernel_size, 1),
+                    )
+                ),
+                weight_norm(
+                    nn.Conv1d(
+                        dim,
+                        dim,
+                        kernel_size,
+                        1,
+                        dilation=1,
+                        padding=self.get_padding(kernel_size, 1),
+                    )
+                ),
             ]
         )
 

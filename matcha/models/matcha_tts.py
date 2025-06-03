@@ -82,9 +82,20 @@ class MatchaTTS(BaseLightningClass):  # 🍵
         """
         c = OmegaConf.load(cfg)
 
-        model = cls(n_vocab=c.n_vocab, n_feats=c.n_feats, n_spks=c.n_spks, spk_emb_dim=c.spk_emb_dim,
-                    optimizer=c.optimizer, out_size=c.out_size, prior_loss=c.prior_loss, scheduler=c.scheduler,
-                    cfm=c.cfm, data_statistics=c.data_statistics, decoder=c.decoder, encoder=c.encoder)
+        model = cls(
+            n_vocab=c.n_vocab,
+            n_feats=c.n_feats,
+            n_spks=c.n_spks,
+            spk_emb_dim=c.spk_emb_dim,
+            optimizer=c.optimizer,
+            out_size=c.out_size,
+            prior_loss=c.prior_loss,
+            scheduler=c.scheduler,
+            cfm=c.cfm,
+            data_statistics=c.data_statistics,
+            decoder=c.decoder,
+            encoder=c.encoder,
+        )
         return model
 
     @classmethod
@@ -94,7 +105,9 @@ class MatchaTTS(BaseLightningClass):  # 🍵
         model hub.
         """
         config_path = hf_hub_download(repo_id=repo_id, filename="config.yaml", revision=revision)
-        model_path = hf_hub_download(repo_id=repo_id, filename="pytorch_model.bin", revision=revision)
+        model_path = hf_hub_download(
+            repo_id=repo_id, filename="pytorch_model.bin", revision=revision
+        )
         model = cls.from_hparams(config_path)
         state_dict = torch.load(model_path, map_location=device)
         model.load_state_dict(state_dict)
@@ -234,9 +247,14 @@ class MatchaTTS(BaseLightningClass):  # 🍵
             max_offset = (y_lengths - out_size).clamp(0)
             offset_ranges = list(zip([0] * max_offset.shape[0], max_offset.cpu().numpy()))
             out_offset = torch.LongTensor(
-                [torch.tensor(random.choice(range(start, end)) if end > start else 0) for start, end in offset_ranges]
+                [
+                    torch.tensor(random.choice(range(start, end)) if end > start else 0)
+                    for start, end in offset_ranges
+                ]
             ).to(y_lengths)
-            attn_cut = torch.zeros(attn.shape[0], attn.shape[1], out_size, dtype=attn.dtype, device=attn.device)
+            attn_cut = torch.zeros(
+                attn.shape[0], attn.shape[1], out_size, dtype=attn.dtype, device=attn.device
+            )
             y_cut = torch.zeros(y.shape[0], self.n_feats, out_size, dtype=y.dtype, device=y.device)
 
             y_cut_lengths = []

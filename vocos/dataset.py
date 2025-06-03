@@ -27,7 +27,11 @@ class VocosDataModule(LightningDataModule):
     def _get_dataloder(self, cfg: DataConfig, train: bool):
         dataset = VocosDataset(cfg, train=train)
         dataloader = DataLoader(
-            dataset, batch_size=cfg.batch_size, num_workers=cfg.num_workers, shuffle=train, pin_memory=True,
+            dataset,
+            batch_size=cfg.batch_size,
+            num_workers=cfg.num_workers,
+            shuffle=train,
+            pin_memory=True,
         )
         return dataloader
 

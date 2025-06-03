@@ -28,10 +28,17 @@ VOCODER_URLS = {
 }
 
 MULTISPEAKER_MODEL = {
-    "matcha_vctk": {"vocoder": "hifigan_univ_v1", "speaking_rate": 0.85, "spk": 0, "spk_range": (0, 107)}
+    "matcha_vctk": {
+        "vocoder": "hifigan_univ_v1",
+        "speaking_rate": 0.85,
+        "spk": 0,
+        "spk_range": (0, 107),
+    }
 }
 
-SINGLESPEAKER_MODEL = {"matcha_ljspeech": {"vocoder": "hifigan_T2_v1", "speaking_rate": 0.95, "spk": None}}
+SINGLESPEAKER_MODEL = {
+    "matcha_ljspeech": {"vocoder": "hifigan_T2_v1", "speaking_rate": 0.95, "spk": None}
+}
 
 
 def plot_spectrogram_to_numpy(spectrogram, filename):
@@ -132,9 +139,9 @@ def save_to_folder(filename: str, output: dict, folder: str):
 
 
 def validate_args(args):
-    assert (
-        args.text or args.file
-    ), "Either text or file must be provided Matcha-T(ea)TTS need sometext to whisk the waveforms."
+    assert args.text or args.file, (
+        "Either text or file must be provided Matcha-T(ea)TTS need sometext to whisk the waveforms."
+    )
     assert args.temperature >= 0, "Sampling temperature cannot be negative"
     assert args.steps > 0, "Number of ODE steps must be greater than 0"
 
@@ -173,9 +180,9 @@ def validate_args_for_multispeaker_model(args):
 
     spk_range = MULTISPEAKER_MODEL[args.model]["spk_range"]
     if args.spk is not None:
-        assert (
-            args.spk >= spk_range[0] and args.spk <= spk_range[-1]
-        ), f"Speaker ID must be between {spk_range} for this model."
+        assert args.spk >= spk_range[0] and args.spk <= spk_range[-1], (
+            f"Speaker ID must be between {spk_range} for this model."
+        )
     else:
         available_spk_id = MULTISPEAKER_MODEL[args.model]["spk"]
         warn_ = f"[!] Speaker ID not provided! Using speaker ID {available_spk_id}"
@@ -247,7 +254,9 @@ def cli():
         help="change the speaking rate, a higher value means slower speaking rate (default: 1.0)",
     )
     parser.add_argument("--steps", type=int, default=10, help="Number of ODE steps  (default: 10)")
-    parser.add_argument("--cpu", action="store_true", help="Use CPU for inference (default: use GPU if available)")
+    parser.add_argument(
+        "--cpu", action="store_true", help="Use CPU for inference (default: use GPU if available)"
+    )
     parser.add_argument(
         "--denoiser_strength",
         type=float,
@@ -262,7 +271,10 @@ def cli():
     )
     parser.add_argument("--batched", action="store_true", help="Batched inference (default: False)")
     parser.add_argument(
-        "--batch_size", type=int, default=32, help="Batch size only useful when --batched (default: 32)"
+        "--batch_size",
+        type=int,
+        default=32,
+        help="Batch size only useful when --batched (default: 32)",
     )
 
     args = parser.parse_args()
@@ -282,7 +294,9 @@ def cli():
 
     texts = get_texts(args)
 
-    spk = torch.tensor([args.spk], device=device, dtype=torch.long) if args.spk is not None else None
+    spk = (
+        torch.tensor([args.spk], device=device, dtype=torch.long) if args.spk is not None else None
+    )
     if len(texts) == 1 or not args.batched:
         unbatched_synthesis(args, device, model, vocoder, denoiser, texts, spk)
     else:
@@ -343,15 +357,24 @@ def batched_synthesis(args, device, model, vocoder, denoiser, texts, spk):
         total_rtf.append(output["rtf"])
         total_rtf_w.append(rtf_w)
         for j in range(output["mel"].shape[0]):
-            base_name = f"utterance_{j:03d}_speaker_{args.spk:03d}" if args.spk is not None else f"utterance_{j:03d}"
+            base_name = (
+                f"utterance_{j:03d}_speaker_{args.spk:03d}"
+                if args.spk is not None
+                else f"utterance_{j:03d}"
+            )
             length = output["mel_lengths"][j]
-            new_dict = {"mel": output["mel"][j][:, :length], "waveform": output["waveform"][j][: length * 256]}
+            new_dict = {
+                "mel": output["mel"][j][:, :length],
+                "waveform": output["waveform"][j][: length * 256],
+            }
             location = save_to_folder(base_name, new_dict, args.output_folder)
             print(f"[🍵-{j}] Waveform saved: {location}")
 
     print("".join(["="] * 100))
     print(f"[🍵] Average Matcha-TTS RTF: {np.mean(total_rtf):.4f} ± {np.std(total_rtf)}")
-    print(f"[🍵] Average Matcha-TTS + VOCODER RTF: {np.mean(total_rtf_w):.4f} ± {np.std(total_rtf_w)}")
+    print(
+        f"[🍵] Average Matcha-TTS + VOCODER RTF: {np.mean(total_rtf_w):.4f} ± {np.std(total_rtf_w)}"
+    )
     print("[🍵] Enjoy the freshly whisked 🍵 Matcha-TTS!")
 
 
@@ -360,7 +383,11 @@ def unbatched_synthesis(args, device, model, vocoder, denoiser, texts, spk):
     total_rtf_w = []
     for i, text in enumerate(texts):
         i = i + 1
-        base_name = f"utterance_{i:03d}_speaker_{args.spk:03d}" if args.spk is not None else f"utterance_{i:03d}"
+        base_name = (
+            f"utterance_{i:03d}_speaker_{args.spk:03d}"
+            if args.spk is not None
+            else f"utterance_{i:03d}"
+        )
 
         print("".join(["="] * 100))
         text = text.strip()
@@ -390,7 +417,9 @@ def unbatched_synthesis(args, device, model, vocoder, denoiser, texts, spk):
 
     print("".join(["="] * 100))
     print(f"[🍵] Average Matcha-TTS RTF: {np.mean(total_rtf):.4f} ± {np.std(total_rtf)}")
-    print(f"[🍵] Average Matcha-TTS + VOCODER RTF: {np.mean(total_rtf_w):.4f} ± {np.std(total_rtf_w)}")
+    print(
+        f"[🍵] Average Matcha-TTS + VOCODER RTF: {np.mean(total_rtf_w):.4f} ± {np.std(total_rtf_w)}"
+    )
     print("[🍵] Enjoy the freshly whisked 🍵 Matcha-TTS!")
 
 

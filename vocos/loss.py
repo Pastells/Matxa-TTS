@@ -12,15 +12,16 @@ class MelSpecReconstructionLoss(nn.Module):
     L1 distance between the mel-scaled magnitude spectrograms of the ground truth sample and the generated sample
     """
 
-    def __init__(self,
-                sample_rate: int = 22050,
-                n_fft: int = 1024,
-                hop_length: int = 256,
-                n_mels: int = 80,
-                f_min: int = 0,
-                f_max: int = 8000,
-                norm: str = "slaney",
-                mel_scale: str = "slaney",
+    def __init__(
+        self,
+        sample_rate: int = 22050,
+        n_fft: int = 1024,
+        hop_length: int = 256,
+        n_mels: int = 80,
+        f_min: int = 0,
+        f_max: int = 8000,
+        norm: str = "slaney",
+        mel_scale: str = "slaney",
     ):
         super().__init__()
         self.mel_spec = torchaudio.transforms.MelSpectrogram(
@@ -30,10 +31,10 @@ class MelSpecReconstructionLoss(nn.Module):
             n_mels=n_mels,
             center=True,
             power=1,
-            f_min=f_min, 
+            f_min=f_min,
             f_max=f_max,
             norm=norm,
-            mel_scale=mel_scale
+            mel_scale=mel_scale,
         )
 
     def forward(self, y_hat, y) -> torch.Tensor:
@@ -113,7 +114,9 @@ class FeatureMatchingLoss(nn.Module):
     Feature Matching Loss module. Calculates the feature matching loss between feature maps of the sub-discriminators.
     """
 
-    def forward(self, fmap_r: List[List[torch.Tensor]], fmap_g: List[List[torch.Tensor]]) -> torch.Tensor:
+    def forward(
+        self, fmap_r: List[List[torch.Tensor]], fmap_g: List[List[torch.Tensor]]
+    ) -> torch.Tensor:
         """
         Args:
             fmap_r (List[List[Tensor]]): List of feature maps from real samples.

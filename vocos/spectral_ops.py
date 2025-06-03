@@ -43,7 +43,9 @@ class ISTFT(nn.Module):
         """
         if self.padding == "center":
             # Fallback to pytorch native implementation
-            return torch.istft(spec, self.n_fft, self.hop_length, self.win_length, self.window, center=True)
+            return torch.istft(
+                spec, self.n_fft, self.hop_length, self.win_length, self.window, center=True
+            )
         elif self.padding == "same":
             pad = (self.win_length - self.hop_length) // 2
         else:
@@ -59,13 +61,19 @@ class ISTFT(nn.Module):
         # Overlap and Add
         output_size = (T - 1) * self.hop_length + self.win_length
         y = torch.nn.functional.fold(
-            ifft, output_size=(1, output_size), kernel_size=(1, self.win_length), stride=(1, self.hop_length),
+            ifft,
+            output_size=(1, output_size),
+            kernel_size=(1, self.win_length),
+            stride=(1, self.hop_length),
         )[:, 0, 0, pad:-pad]
 
         # Window envelope
         window_sq = self.window.square().expand(1, T, -1).transpose(1, 2)
         window_envelope = torch.nn.functional.fold(
-            window_sq, output_size=(1, output_size), kernel_size=(1, self.win_length), stride=(1, self.hop_length),
+            window_sq,
+            output_size=(1, output_size),
+            kernel_size=(1, self.win_length),
+            stride=(1, self.hop_length),
         ).squeeze()[pad:-pad]
 
         # Normalize
@@ -171,7 +179,11 @@ class IMDCT(nn.Module):
         Y[..., :N] = X
         Y[..., N:] = -1 * torch.conj(torch.flip(X, dims=(-1,)))
         y = torch.fft.ifft(Y * view_as_complex(self.pre_twiddle).expand(Y.shape), dim=-1)
-        y = torch.real(y * view_as_complex(self.post_twiddle).expand(y.shape)) * np.sqrt(N) * np.sqrt(2)
+        y = (
+            torch.real(y * view_as_complex(self.post_twiddle).expand(y.shape))
+            * np.sqrt(N)
+            * np.sqrt(2)
+        )
         result = y * self.window.expand(y.shape)
         output_size = (1, (L + 1) * N)
         audio = torch.nn.functional.fold(

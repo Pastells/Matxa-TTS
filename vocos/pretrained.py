@@ -39,7 +39,10 @@ class Vocos(nn.Module):
     """
 
     def __init__(
-        self, feature_extractor: FeatureExtractor, backbone: Backbone, head: FourierHead,
+        self,
+        feature_extractor: FeatureExtractor,
+        backbone: Backbone,
+        head: FourierHead,
     ):
         super().__init__()
         self.feature_extractor = feature_extractor
@@ -65,7 +68,9 @@ class Vocos(nn.Module):
         Class method to create a new Vocos model instance from a pre-trained model stored in the Hugging Face model hub.
         """
         config_path = hf_hub_download(repo_id=repo_id, filename="config.yaml", revision=revision)
-        model_path = hf_hub_download(repo_id=repo_id, filename="pytorch_model.bin", revision=revision)
+        model_path = hf_hub_download(
+            repo_id=repo_id, filename="pytorch_model.bin", revision=revision
+        )
         model = cls.from_hparams(config_path)
         state_dict = torch.load(model_path, map_location=device)
         if isinstance(model.feature_extractor, EncodecFeatures):
@@ -79,21 +84,23 @@ class Vocos(nn.Module):
         return model
 
     @classmethod
-    def from_local_pretrained(cls, config_path: str, model_path: str, device: str, revision: Optional[str] = None) -> Vocos:
+    def from_local_pretrained(
+        cls, config_path: str, model_path: str, device: str, revision: Optional[str] = None
+    ) -> Vocos:
         """
         Class method to load pre-trained Vocos model instance stored locally.
         """
         model = cls.from_hparams(config_path)
         state_dict = torch.load(model_path, map_location=device)  # "cpu"
-        '''
+        """
         if isinstance(model.feature_extractor, EncodecFeatures):
             encodec_parameters = {
                 "feature_extractor.encodec." + key: value
                 for key, value in model.feature_extractor.encodec.state_dict().items()
             }
             state_dict.update(encodec_parameters)
-        '''
-        model.load_state_dict(state_dict['state_dict'], strict=False)
+        """
+        model.load_state_dict(state_dict["state_dict"], strict=False)
         model.eval()
         return model
 
@@ -146,9 +153,9 @@ class Vocos(nn.Module):
             Tensor: Features of shape (B, C, L), where B is the batch size, C denotes the feature dimension,
                     and L is the sequence length.
         """
-        assert isinstance(
-            self.feature_extractor, EncodecFeatures
-        ), "Feature extractor should be an instance of EncodecFeatures"
+        assert isinstance(self.feature_extractor, EncodecFeatures), (
+            "Feature extractor should be an instance of EncodecFeatures"
+        )
 
         if codes.dim() == 2:
             codes = codes.unsqueeze(1)
@@ -156,7 +163,9 @@ class Vocos(nn.Module):
         n_bins = self.feature_extractor.encodec.quantizer.bins
         offsets = torch.arange(0, n_bins * len(codes), n_bins, device=codes.device)
         embeddings_idxs = codes + offsets.view(-1, 1, 1)
-        features = torch.nn.functional.embedding(embeddings_idxs, self.feature_extractor.codebook_weights).sum(dim=0)
+        features = torch.nn.functional.embedding(
+            embeddings_idxs, self.feature_extractor.codebook_weights
+        ).sum(dim=0)
         features = features.transpose(1, 2)
 
         return features

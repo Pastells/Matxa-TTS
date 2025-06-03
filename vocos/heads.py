@@ -63,7 +63,7 @@ class ISTFTHead(FourierHead):
         # only costs time
         # phase = torch.atan2(y, x)
         # S = mag * torch.exp(phase * 1j)
-        # better directly produce the complex value 
+        # better directly produce the complex value
         S = mag * (x + 1j * y)
         audio = self.istft(S)
         return audio
@@ -138,7 +138,9 @@ class IMDCTCosHead(FourierHead):
         clip_audio (bool, optional): Whether to clip the audio output within the range of [-1.0, 1.0]. Defaults to False.
     """
 
-    def __init__(self, dim: int, mdct_frame_len: int, padding: str = "same", clip_audio: bool = False):
+    def __init__(
+        self, dim: int, mdct_frame_len: int, padding: str = "same", clip_audio: bool = False
+    ):
         super().__init__()
         self.clip_audio = clip_audio
         self.out = nn.Linear(dim, mdct_frame_len)

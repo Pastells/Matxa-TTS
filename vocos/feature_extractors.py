@@ -26,16 +26,18 @@ class FeatureExtractor(nn.Module):
 
 
 class MelSpectrogramFeatures(FeatureExtractor):
-    def __init__(self,
-                sample_rate=24000,
-                n_fft=1024,
-                hop_length=256,
-                n_mels=100,
-                padding="center",
-                f_min=0, # to match matcha :X
-                f_max=8000,
-                norm="slaney",
-                mel_scale="slaney"):
+    def __init__(
+        self,
+        sample_rate=24000,
+        n_fft=1024,
+        hop_length=256,
+        n_mels=100,
+        padding="center",
+        f_min=0,  # to match matcha :X
+        f_max=8000,
+        norm="slaney",
+        mel_scale="slaney",
+    ):
         super().__init__()
         if padding not in ["center", "same"]:
             raise ValueError("Padding must be 'center' or 'same'.")
@@ -47,10 +49,10 @@ class MelSpectrogramFeatures(FeatureExtractor):
             n_mels=n_mels,
             center=padding == "center",
             power=1,
-            f_min=f_min, # to match matcha :X
+            f_min=f_min,  # to match matcha :X
             f_max=f_max,
             norm=norm,
-            mel_scale=mel_scale
+            mel_scale=mel_scale,
         )
 
     def forward(self, audio, **kwargs):
@@ -84,7 +86,9 @@ class EncodecFeatures(FeatureExtractor):
         self.num_q = self.encodec.quantizer.get_num_quantizers_for_bandwidth(
             self.encodec.frame_rate, bandwidth=max(bandwidths)
         )
-        codebook_weights = torch.cat([vq.codebook for vq in self.encodec.quantizer.vq.layers[: self.num_q]], dim=0)
+        codebook_weights = torch.cat(
+            [vq.codebook for vq in self.encodec.quantizer.vq.layers[: self.num_q]], dim=0
+        )
         self.codebook_weights = torch.nn.Parameter(codebook_weights, requires_grad=train_codebooks)
         self.bandwidths = bandwidths
 
@@ -105,7 +109,10 @@ class EncodecFeatures(FeatureExtractor):
         # Instead of summing in the loop, it stores subsequent VQ dictionaries in a single `self.codebook_weights`
         # with offsets given by the number of bins, and finally summed in a vectorized operation.
         offsets = torch.arange(
-            0, self.encodec.quantizer.bins * len(codes), self.encodec.quantizer.bins, device=audio.device
+            0,
+            self.encodec.quantizer.bins * len(codes),
+            self.encodec.quantizer.bins,
+            device=audio.device,
         )
         embeddings_idxs = codes + offsets.view(-1, 1, 1)
         features = torch.nn.functional.embedding(embeddings_idxs, self.codebook_weights).sum(dim=0)

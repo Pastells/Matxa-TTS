@@ -19,13 +19,19 @@ class MultiPeriodDiscriminator(nn.Module):
             Defaults to None.
     """
 
-    def __init__(self, periods: Tuple[int, ...] = (2, 3, 5, 7, 11), num_embeddings: Optional[int] = None):
+    def __init__(
+        self, periods: Tuple[int, ...] = (2, 3, 5, 7, 11), num_embeddings: Optional[int] = None
+    ):
         super().__init__()
-        self.discriminators = nn.ModuleList([DiscriminatorP(period=p, num_embeddings=num_embeddings) for p in periods])
+        self.discriminators = nn.ModuleList(
+            [DiscriminatorP(period=p, num_embeddings=num_embeddings) for p in periods]
+        )
 
     def forward(
         self, y: torch.Tensor, y_hat: torch.Tensor, bandwidth_id: Optional[torch.Tensor] = None
-    ) -> Tuple[List[torch.Tensor], List[torch.Tensor], List[List[torch.Tensor]], List[List[torch.Tensor]]]:
+    ) -> Tuple[
+        List[torch.Tensor], List[torch.Tensor], List[List[torch.Tensor]], List[List[torch.Tensor]]
+    ]:
         y_d_rs = []
         y_d_gs = []
         fmap_rs = []
@@ -55,11 +61,27 @@ class DiscriminatorP(nn.Module):
         self.period = period
         self.convs = nn.ModuleList(
             [
-                weight_norm(Conv2d(in_channels, 32, (kernel_size, 1), (stride, 1), padding=(kernel_size // 2, 0))),
-                weight_norm(Conv2d(32, 128, (kernel_size, 1), (stride, 1), padding=(kernel_size // 2, 0))),
-                weight_norm(Conv2d(128, 512, (kernel_size, 1), (stride, 1), padding=(kernel_size // 2, 0))),
-                weight_norm(Conv2d(512, 1024, (kernel_size, 1), (stride, 1), padding=(kernel_size // 2, 0))),
-                weight_norm(Conv2d(1024, 1024, (kernel_size, 1), (1, 1), padding=(kernel_size // 2, 0))),
+                weight_norm(
+                    Conv2d(
+                        in_channels,
+                        32,
+                        (kernel_size, 1),
+                        (stride, 1),
+                        padding=(kernel_size // 2, 0),
+                    )
+                ),
+                weight_norm(
+                    Conv2d(32, 128, (kernel_size, 1), (stride, 1), padding=(kernel_size // 2, 0))
+                ),
+                weight_norm(
+                    Conv2d(128, 512, (kernel_size, 1), (stride, 1), padding=(kernel_size // 2, 0))
+                ),
+                weight_norm(
+                    Conv2d(512, 1024, (kernel_size, 1), (stride, 1), padding=(kernel_size // 2, 0))
+                ),
+                weight_norm(
+                    Conv2d(1024, 1024, (kernel_size, 1), (1, 1), padding=(kernel_size // 2, 0))
+                ),
             ]
         )
         if num_embeddings is not None:
@@ -123,7 +145,9 @@ class MultiResolutionDiscriminator(nn.Module):
 
     def forward(
         self, y: torch.Tensor, y_hat: torch.Tensor, bandwidth_id: torch.Tensor = None
-    ) -> Tuple[List[torch.Tensor], List[torch.Tensor], List[List[torch.Tensor]], List[List[torch.Tensor]]]:
+    ) -> Tuple[
+        List[torch.Tensor], List[torch.Tensor], List[List[torch.Tensor]], List[List[torch.Tensor]]
+    ]:
         y_d_rs = []
         y_d_gs = []
         fmap_rs = []
@@ -147,13 +171,22 @@ class DiscriminatorR(nn.Module):
         num_embeddings: Optional[int] = None,
         channels: int = 32,
         hop_factor: float = 0.25,
-        bands: Tuple[Tuple[float, float], ...] = ((0.0, 0.1), (0.1, 0.25), (0.25, 0.5), (0.5, 0.75), (0.75, 1.0)),
+        bands: Tuple[Tuple[float, float], ...] = (
+            (0.0, 0.1),
+            (0.1, 0.25),
+            (0.25, 0.5),
+            (0.5, 0.75),
+            (0.75, 1.0),
+        ),
     ):
         super().__init__()
         self.window_length = window_length
         self.hop_factor = hop_factor
         self.spec_fn = Spectrogram(
-            n_fft=window_length, hop_length=int(window_length * hop_factor), win_length=window_length, power=None
+            n_fft=window_length,
+            hop_length=int(window_length * hop_factor),
+            win_length=window_length,
+            power=None,
         )
         n_fft = window_length // 2 + 1
         bands = [(int(b[0] * n_fft), int(b[1] * n_fft)) for b in bands]

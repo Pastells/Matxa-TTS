@@ -1,4 +1,4 @@
-""" from https://github.com/keithito/tacotron
+"""from https://github.com/keithito/tacotron
 
 Cleaners are transformations that run over the input text at both training and eval time.
 
@@ -129,7 +129,7 @@ def transliteration_cleaners(text):
 
 def english_cleaners2(text):
     """Pipeline for English text, including abbreviation expansion. + punctuation + stress"""
-    text = text.replace('\u0303', '')
+    text = text.replace("\u0303", "")
     text = convert_to_ascii(text)
     text = lowercase(text)
     text = expand_abbreviations(text)

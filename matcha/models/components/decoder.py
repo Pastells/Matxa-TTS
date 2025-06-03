@@ -131,7 +131,9 @@ class Upsample1D(nn.Module):
             number of output channels. Defaults to `channels`.
     """
 
-    def __init__(self, channels, use_conv=False, use_conv_transpose=True, out_channels=None, name="conv"):
+    def __init__(
+        self, channels, use_conv=False, use_conv_transpose=True, out_channels=None, name="conv"
+    ):
         super().__init__()
         self.channels = channels
         self.out_channels = out_channels or channels
@@ -235,7 +237,9 @@ class Decoder(nn.Module):
             input_channel = output_channel
             output_channel = channels[i]
             is_last = i == len(channels) - 1
-            resnet = ResnetBlock1D(dim=input_channel, dim_out=output_channel, time_emb_dim=time_embed_dim)
+            resnet = ResnetBlock1D(
+                dim=input_channel, dim_out=output_channel, time_emb_dim=time_embed_dim
+            )
             transformer_blocks = nn.ModuleList(
                 [
                     self.get_block(
@@ -250,7 +254,9 @@ class Decoder(nn.Module):
                 ]
             )
             downsample = (
-                Downsample1D(output_channel) if not is_last else nn.Conv1d(output_channel, output_channel, 3, padding=1)
+                Downsample1D(output_channel)
+                if not is_last
+                else nn.Conv1d(output_channel, output_channel, 3, padding=1)
             )
 
             self.down_blocks.append(nn.ModuleList([resnet, transformer_blocks, downsample]))
@@ -259,7 +265,9 @@ class Decoder(nn.Module):
             input_channel = channels[-1]
             out_channels = channels[-1]
 
-            resnet = ResnetBlock1D(dim=input_channel, dim_out=output_channel, time_emb_dim=time_embed_dim)
+            resnet = ResnetBlock1D(
+                dim=input_channel, dim_out=output_channel, time_emb_dim=time_embed_dim
+            )
 
             transformer_blocks = nn.ModuleList(
                 [

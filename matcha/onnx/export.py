@@ -98,7 +98,10 @@ def main():
     )
     parser.add_argument("output", type=str, help="Path to output `.onnx` file")
     parser.add_argument(
-        "--n-timesteps", type=int, default=5, help="Number of steps to use for reverse diffusion in decoder (default 5)"
+        "--n-timesteps",
+        type=int,
+        default=5,
+        help="Number of steps to use for reverse diffusion in decoder (default 5)",
     )
     parser.add_argument(
         "--vocoder-name",
@@ -113,7 +116,9 @@ def main():
         default=None,
         help="Vocoder checkpoint to embed  in the ONNX graph for an `e2e` like experience",
     )
-    parser.add_argument("--opset", type=int, default=DEFAULT_OPSET, help="ONNX opset version to use (default 15")
+    parser.add_argument(
+        "--opset", type=int, default=DEFAULT_OPSET, help="ONNX opset version to use (default 15"
+    )
 
     args = parser.parse_args()
 
@@ -124,9 +129,9 @@ def main():
     matcha = load_matcha(checkpoint_path.stem, checkpoint_path, "cpu")
 
     if args.vocoder_name or args.vocoder_checkpoint_path:
-        assert (
-            args.vocoder_name and args.vocoder_checkpoint_path
-        ), "Both vocoder_name and vocoder-checkpoint are required when embedding the vocoder in the ONNX graph."
+        assert args.vocoder_name and args.vocoder_checkpoint_path, (
+            "Both vocoder_name and vocoder-checkpoint are required when embedding the vocoder in the ONNX graph."
+        )
         vocoder, _ = load_vocoder(args.vocoder_name, args.vocoder_checkpoint_path, "cpu")
     else:
         vocoder = None
