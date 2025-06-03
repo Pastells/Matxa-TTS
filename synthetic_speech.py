@@ -83,9 +83,8 @@ def create_synthetic_corpus_parallel(
     temperature: float = 0.70,
     sample_rate: int = 22050,
     audio_format: str = "wav",
-    save_metadata: bool = True,
     same_speaker_batching: bool = True,
-):
+) -> list[dict]:
     """
     Create a synthetic corpus from batch texts using parallel processing
 
@@ -199,19 +198,6 @@ def create_synthetic_corpus_parallel(
             print(f"Error processing batch: {e}")
             continue
 
-    # Save metadata
-    if save_metadata:
-        # Save as JSON
-        metadata_file = output_path / "corpus_metadata.json"
-        with open(metadata_file, "w", encoding="utf-8") as f:
-            json.dump(corpus_metadata, f, indent=2, ensure_ascii=False)
-
-        # Save as CSV for easy analysis
-        metadata_csv = output_path / "corpus_metadata.csv"
-        pd.DataFrame(corpus_metadata).to_csv(metadata_csv, index=False)
-
-        print(f"Corpus metadata saved to {metadata_file} and {metadata_csv}")
-
     print(f"Synthetic corpus created with {len(corpus_metadata)} audio files in {output_dir}")
 
     # Print summary statistics
@@ -221,6 +207,8 @@ def create_synthetic_corpus_parallel(
         print(f"Total speakers: {len(speaker_ids)}")
         print(f"Total audio files: {len(corpus_metadata)}")
         print(f"Batch size used: {batch_size}")
+
+    return corpus_metadata
 
 
 if __name__ == "__main__":
@@ -264,7 +252,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     def create_synthetic_corpus(length_scale):
-        create_synthetic_corpus_parallel(
+        return create_synthetic_corpus_parallel(
             texts_input=args.texts_file,
             output_dir=args.output_dir,
             speaker_ids=args.speaker_ids,
@@ -276,6 +264,15 @@ if __name__ == "__main__":
             same_speaker_batching=not args.no_same_speaker_batching,
         )
 
-    create_synthetic_corpus(length_scale=args.length_scale)
-    create_synthetic_corpus(length_scale=args.length_scale + 0.15)
-    create_synthetic_corpus(length_scale=args.length_scale - 0.15)
+    corpus_metadata = []
+    metadata = create_synthetic_corpus(length_scale=args.length_scale)
+    corpus_metadata.extend(metadata)
+    metadata = create_synthetic_corpus(length_scale=args.length_scale + 0.15)
+    corpus_metadata.extend(metadata)
+    metadata = create_synthetic_corpus(length_scale=args.length_scale - 0.15)
+    corpus_metadata.extend(metadata)
+
+    output_path = Path(args.output_dir)
+    metadata_csv = output_path / "corpus_metadata.csv"
+    pd.DataFrame(corpus_metadata).to_csv(metadata_csv, index=False)
+    print(f"Corpus metadata saved {metadata_csv}")
