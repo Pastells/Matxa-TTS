@@ -1,0 +1,208 @@
+:root {
+  --salmon-claro: #e3c1b8;
+  --salmon-oscuro: #b25e45;
+  --negro-corporativo: #000000;
+  --gris-neutro: #b3b3b3;
+  --primary-500: var(--salmon-oscuro) !important;
+  --primary-600: #d25e55 !important;
+  --primary-400: var(--salmon-claro) !important;
+  --font: "Archivo", sans-serif;
+}
+
+/* ==========================
+   ESTRUCTURA GENERAL
+========================== */
+
+html,
+body {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font);
+}
+
+#root,
+#gradio-app {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+main {
+  flex: 1 0 auto;
+}
+
+/* ==========================
+   CABECERA
+========================== */
+
+#header-block {
+  margin: 0.5rem 0 1rem 0;
+}
+
+#header-block .custom-title {
+  /* color: var(--salmon-oscuro); */
+  font-size: 2.4rem;
+  font-weight: bold;
+  margin-bottom: 0.3em;
+  text-align: center;
+}
+
+#header-block .custom-subtitle {
+  color: var(--negro-corporativo);
+  font-size: 1.3rem;
+  text-align: center;
+  margin-top: -10px;
+}
+
+/* ==========================
+   BOTONES
+========================== */
+
+.gr-button-primary {
+  /* background-color: var(--salmon-claro) !important; */
+  color: white !important;
+  font-weight: bold;
+  border-radius: 8px;
+}
+
+/* Main buttons using CSS variables (these will get automatic hover) */
+button.svelte-1ixn6qd,
+a.svelte-1ixn6qd {
+  background-color: var(--salmon-oscuro) !important;
+  color: white !important;
+  border: none !important;
+  transition: background-color 0.2s ease !important;
+}
+
+/* Add hover states for your specific buttons */
+button.svelte-1ixn6qd:hover,
+a.svelte-1ixn6qd:hover {
+  background-color: var(--salmon-claro) !important;
+  color: var(--negro-corporativo) !important;
+}
+
+/* .gr-button-primary:hover { */
+/*   background-color: var(--salmon-oscuro) !important; */
+/* } */
+
+/* button.svelte-1ixn6qd, */
+/* a.svelte-1ixn6qd { */
+/*   background-color: var(--salmon-oscuro) !important; */
+/*   color: white !important; */
+/* } */
+
+/* Alineación vertical de botones */
+.button-column {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 100% !important;
+}
+
+/* ==========================
+   CAMPOS DE TEXTO Y AUDIO
+========================== */
+
+.gr-textbox label {
+  color: var(--negro-corporativo) !important;
+  font-weight: bold;
+}
+
+.gradio-audio,
+.gr-textbox {
+  border: 2px solid var(--gris-neutro) !important;
+}
+
+.audio-component button {
+  min-height: 40px !important;
+  font-size: 16px !important;
+}
+
+.gradio-audio {
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+/* ==========================
+   ESTADOS Y ESTILOS EXTRA
+========================== */
+
+.recording {
+  border-color: #ff4444 !important;
+  box-shadow: 0 0 10px rgba(255, 68, 68, 0.3) !important;
+}
+
+span.svelte-g2oxp3 {
+  background-color: var(--salmon-claro) !important;
+  color: var(--negro-corporativo) !important;
+}
+
+label.svelte-1to105q {
+  background-color: var(--salmon-claro) !important;
+  color: var(--negro-corporativo)  !important;
+}
+
+div.svelte-vzs2gq {
+  background-color: white !important;
+  color: var(--negro-corporativo)  !important;
+}
+
+.record-button.svelte-1oiuk2f::before {
+  background: var(--salmon-claro);
+}
+
+.record-button.svelte-1oiuk2f::before {
+  background: var(--salmon-oscuro);
+}
+
+/* ==========================
+   FOOTER INSTITUCIONAL
+========================== */
+
+#footer {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  border-top: 1px solid var(--gris-neutro);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0 !important;
+}
+
+.footer-logos {
+  display: flex;
+  gap: 1.2rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.footer-logo {
+  max-width: 240px;
+  height: auto;
+  object-fit: contain;
+  opacity: 0.9;
+  margin: 1rem;
+}
+
+.footer-text {
+  font-size: 0.85rem;
+  color: var(--negro-corporativo);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.footer-link {
+  color: var(--salmon-oscuro);
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.footer-link:hover {
+  text-decoration: underline;
+}
