@@ -35,13 +35,38 @@ def matxa_alvocat():
 
 
 @torch.inference_mode()
-def process_text(text: str, cleaner: str):
-    x = torch.tensor(
-        intersperse(text_to_sequence(text, [cleaner]), 0), dtype=torch.long, device=device
-    )[None]
-    x_lengths = torch.tensor([x.shape[-1]], dtype=torch.long, device=device)
-    x_phones = sequence_to_text(x.squeeze(0).tolist())
-    return {"x_orig": text, "x": x, "x_lengths": x_lengths, "x_phones": x_phones}
+def process_text(texts: str | list[str], cleaners: str | list[str]) -> dict:
+    """Process a batch of texts in parallel"""
+    # Convert all texts to sequences
+    if isinstance(texts, str):
+        texts = [texts]
+
+    if isinstance(cleaners, str):
+        cleaners = [cleaners]
+
+    sequences = []
+    sequences = [
+        intersperse(text_to_sequence(text, [cleaner]), 0) for text, cleaner in zip(texts, cleaners)
+    ]
+
+    # Pad sequences to same length for batching
+    max_len = max(len(seq) for seq in sequences)
+    padded_sequences = []
+    lengths = []
+
+    for seq in sequences:
+        padded_seq = seq + [0] * (max_len - len(seq))  # Pad with zeros
+        padded_sequences.append(padded_seq)
+        lengths.append(len(seq))
+
+    # Convert to tensors
+    x = torch.tensor(padded_sequences, dtype=torch.long, device=device)
+    x_lengths = torch.tensor(lengths, dtype=torch.long, device=device)
+
+    # Get phonemes for each text
+    x_phones = [sequence_to_text(seq) for seq in sequences]
+
+    return {"x_orig": texts, "x": x, "x_lengths": x_lengths, "x_phones": x_phones}
 
 
 @torch.inference_mode()
@@ -62,16 +87,73 @@ def synthesise(matcha_model, text, spks, n_timesteps, temperature, length_scale,
 
 
 @torch.inference_mode()
+def synthesise_batch(
+    matcha_model,
+    texts: list[str],
+    spks: int | list | np.ndarray | torch.Tensor,
+    n_timesteps: int,
+    temperature: float,
+    length_scale: float,
+) -> dict:
+    """Synthesise a batch of texts in parallel"""
+    start_t = dt.datetime.now()
+
+    if isinstance(spks, int):
+        spks = torch.tensor([spks], device=device)
+    elif isinstance(spks, (list, np.ndarray)):
+        spks = torch.tensor(spks, device=device)
+
+    if spks.dim() == 0:
+        spks = spks.unsqueeze(0)
+
+    # Expand to match batch size
+    batch_size = len(texts)
+    if spks.shape[0] == 1:
+        # Single speaker for all texts
+        spks = spks.expand(batch_size)
+    elif spks.shape[0] == batch_size:
+        # Different speaker for each text
+        spks = spks if spks.dim() == 1 else spks.squeeze()
+    else:
+        raise ValueError(
+            f"Speaker tensor size {spks.shape[0]} doesn't match batch size {batch_size}"
+        )
+
+    cleaners = [get_cleaner_for_speaker_id(speaker_id.item()) for speaker_id in spks]
+    text_processed = process_text(texts, cleaners)
+
+    output = matcha_model.synthesise(
+        text_processed["x"],
+        text_processed["x_lengths"],
+        n_timesteps=n_timesteps,
+        temperature=temperature,
+        spks=spks,
+        length_scale=length_scale,
+    )
+
+    # Merge everything to one dict
+    output.update({"start_t": start_t, **text_processed})
+    return output
+
+
+@torch.inference_mode()
 def to_vocos_waveform(mel, vocoder):
     audio = vocoder.decode(mel).cpu().squeeze()
     return audio
 
 
+@torch.inference_mode()
+def to_vocos_waveform_batch(mels: torch.Tensor, vocoder) -> list[torch.Tensor]:
+    audio_batch = vocoder.decode(mels)  # Shape: [batch_size, 1, audio_length]
+    audios = [audio.cpu().squeeze() for audio in audio_batch]
+    return audios
+
+
 def save_to_folder(filename: str, output: dict, folder: str):
-    folder = Path(folder)
-    folder.mkdir(exist_ok=True, parents=True)
-    np.save(folder / f"{filename}", output["mel"].cpu().numpy())
-    sf.write(folder / f"{filename}.wav", output["waveform"], 22050, "PCM_24")
+    folder_path = Path(folder)
+    folder_path.mkdir(exist_ok=True, parents=True)
+    np.save(folder_path / f"{filename}", output["mel"].cpu().numpy())
+    sf.write(folder_path / f"{filename}.wav", output["waveform"], 22050, "PCM_24")
 
 
 def tts(
@@ -127,6 +209,70 @@ def tts(
         save_to_folder("synth", output, os.path.join(output_path, "spk_" + str(spk_id)))
     else:
         return output["waveform"]
+
+
+@torch.inference_mode()
+def tts_batch(
+    matcha_model,
+    vocos_vocoder,
+    texts: list[str],
+    spk_ids: list[int],
+    n_timesteps: int = 80,
+    length_scale: float = 0.85,
+    temperature: float = 0.70,
+) -> list[dict]:
+    """Generate TTS for a batch of texts with specified speakers"""
+
+    # Validate speaker IDs
+    if isinstance(spk_ids, int):
+        spk_ids = [spk_ids] * len(texts)
+
+    for spk_id in spk_ids:
+        if spk_id < 0 or spk_id > 7:
+            raise ValueError(f"Speaker ID {spk_id} must be between 0 and 7.")
+
+    # Synthesise batch
+    output = synthesise_batch(
+        matcha_model,
+        texts,
+        spk_ids,
+        n_timesteps,
+        temperature,
+        length_scale,
+    )
+
+    # Convert mels to waveforms in batch
+    waveforms = to_vocos_waveform_batch(output["mel"], vocos_vocoder)
+
+    mel_lengths = output["mel_lengths"]
+    hop_length = 256  # Typical hop length for mel spectrograms
+
+    trimmed_waveforms = []
+    for i, mel_len in enumerate(mel_lengths):
+        # Convert mel frames to audio samples
+        audio_len = mel_len.item() * hop_length
+
+        # Trim the audio to actual length
+        if i < len(waveforms):
+            audio = waveforms[i][:audio_len] if audio_len < len(waveforms[i]) else waveforms[i]
+            trimmed_waveforms.append(audio)
+
+    # Prepare results
+    results = []
+    for i in range(len(texts)):
+        duration = trimmed_waveforms[i].shape[-1] / 22050
+        results.append(
+            {
+                "waveform": trimmed_waveforms[i],
+                "mel": output["mel"][i],
+                "text": texts[i],
+                "phonemes": output["x_phones"][i],
+                "duration": duration,
+                "speaker_id": spk_ids[i],
+            }
+        )
+
+    return results
 
 
 def get_cleaner_for_speaker_id(speaker_id):
