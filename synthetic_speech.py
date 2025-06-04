@@ -179,9 +179,10 @@ def create_synthetic_corpus_parallel(
                 metadata_entry = {
                     "text_id": text_id,
                     "speaker_id": spk_id,
-                    "text": result["text"],
+                    "sentence": result["text"],
+                    "duration": result["duration"],
                     "phonemes": result["phonemes"],
-                    "audio_file": str(audio_path.relative_to(output_path)),
+                    "audio": str(audio_path)[:-3] + "mp3",
                     "n_timesteps": n_timesteps,
                     "length_scale": length_scale,
                     "temperature": temperature,
@@ -273,6 +274,6 @@ if __name__ == "__main__":
     corpus_metadata.extend(metadata)
 
     output_path = Path(args.output_dir)
-    metadata_csv = output_path / "corpus_metadata.csv"
+    metadata_csv = output_path / "corpus_sintetic.csv"
     pd.DataFrame(corpus_metadata).to_csv(metadata_csv, index=False)
     print(f"Corpus metadata saved {metadata_csv}")
