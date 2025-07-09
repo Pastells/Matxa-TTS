@@ -82,7 +82,6 @@ def create_synthetic_corpus_parallel(
     length_scale: float = 0.85,
     temperature: float = 0.70,
     sample_rate: int = 22050,
-    audio_format: str = "wav",
     same_speaker_batching: bool = True,
 ) -> list[dict]:
     """
@@ -165,7 +164,7 @@ def create_synthetic_corpus_parallel(
 
                 # Create filename
                 filename = f"text{text_id}_speaker{spk_id}_scale{round(length_scale, 2)}_temp{round(temperature, 2)}"
-                audio_file = f"{filename}.{audio_format}"
+                audio_file = f"{filename}.wav"
 
                 # Save audio
                 audio_path = output_path / audio_file
@@ -236,14 +235,8 @@ if __name__ == "__main__":
         "--batch_size", type=int, default=32, help="Number of texts to process in parallel"
     )
     parser.add_argument("--temperature", type=float, default=0.70, help="Temperature")
-    parser.add_argument("--length_scale", type=float, default=0.85, help="Speech rate")
+    parser.add_argument("--length_scale", nargs="+", type=float, default=0.85, help="Speech rate")
     parser.add_argument("--n_timesteps", type=int, default=80, help="Number of ODE steps")
-    parser.add_argument(
-        "--audio_format",
-        type=str,
-        default="wav",
-        help="Output audio format",
-    )
     parser.add_argument(
         "--no_same_speaker_batching",
         action="store_true",
@@ -261,17 +254,14 @@ if __name__ == "__main__":
             n_timesteps=args.n_timesteps,
             length_scale=length_scale,
             temperature=args.temperature,
-            audio_format=args.audio_format,
             same_speaker_batching=not args.no_same_speaker_batching,
         )
 
     corpus_metadata = []
-    metadata = create_synthetic_corpus(length_scale=args.length_scale)
-    corpus_metadata.extend(metadata)
-    metadata = create_synthetic_corpus(length_scale=args.length_scale + 0.15)
-    corpus_metadata.extend(metadata)
-    metadata = create_synthetic_corpus(length_scale=args.length_scale - 0.15)
-    corpus_metadata.extend(metadata)
+    for length_scale in args.length_scale:
+        print(f"Creating synthetic corpus with length scale: {length_scale}")
+        metadata = create_synthetic_corpus(length_scale=length_scale)
+        corpus_metadata.extend(metadata)
 
     output_path = Path(args.output_dir)
     metadata_csv = output_path / "corpus_sintetic.csv"
