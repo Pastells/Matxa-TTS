@@ -5,7 +5,7 @@ os.environ["PATH"] += f":{HOME}/espeak-ng/bin"
 os.environ["LD_LIBRARY_PATH"] = f"{HOME}/espeak-ng/lib"
 os.environ["ESPEAK_DATA_PATH"] = f"{HOME}/espeak-ng/espeak-ng-data"
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 os.environ["NCCL_P2P_DISABLE"] = "1"
 os.environ["NCCL_IB_DISABLE"] = "1"
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
@@ -138,7 +138,12 @@ def create_synthetic_corpus_parallel(
     # Process batches
     print(f"Processing {len(text_speaker_pairs)} items in {len(all_batches)} batches...")
 
-    for batch in tqdm(all_batches, desc="Processing batches"):
+    # with open("err_clean", "r") as f:
+    #     missing_batches = [int(n) for n in f.readlines()]
+
+    for batch_idx, batch in enumerate(tqdm(all_batches, desc="Processing batches")):
+        # if batch_idx not in missing_batches:
+        #     continue
         try:
             # Prepare batch data
             batch_texts = [pair[0]["text"] for pair in batch]
@@ -195,7 +200,7 @@ def create_synthetic_corpus_parallel(
                 corpus_metadata.append(metadata_entry)
 
         except Exception as e:
-            print(f"Error processing batch: {e}")
+            print(f"Error processing batch {batch_idx}: {e}")
             continue
 
     print(f"Synthetic corpus created with {len(corpus_metadata)} audio files in {output_dir}")
